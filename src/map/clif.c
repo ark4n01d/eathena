@@ -6371,17 +6371,30 @@ void clif_party_message(struct party_data* p, int account_id, const char* mes, i
 
 /// Updates the position of a party member on the minimap (ZC_NOTIFY_POSITION_TO_GROUPM).
 /// 0107 <account id>.L <x>.W <y>.W
-void clif_party_xy(struct map_session_data *sd)
+/// Sends the data to target or the rest of the party if target is NULL.
+void clif_party_xy(struct party_member_data* data, struct map_session_data* target)
 {
 	unsigned char buf[16];
+	send_target type = SELF;
 
-	nullpo_retv(sd);
+	if( data == NULL || data->sd == NULL )
+		return; // nothing to send
+
+	if( target == NULL )
+	{
+		target = data->sd;
+		type = PARTY_SAMEMAP_WOS;
+	}
+	else
+	{
+		type = SELF;
+	}
 
 	WBUFW(buf,0)=0x107;
-	WBUFL(buf,2)=sd->status.account_id;
-	WBUFW(buf,6)=sd->bl.x;
-	WBUFW(buf,8)=sd->bl.y;
-	clif_send(buf,packet_len(0x107),&sd->bl,PARTY_SAMEMAP_WOS);
+	WBUFL(buf,2)=data->sd->status.account_id;
+	WBUFW(buf,6)=data->x;
+	WBUFW(buf,8)=data->y;
+	clif_send(buf, packet_len(0x107), &target->bl, type);
 }
 
 
