@@ -2657,13 +2657,6 @@ void clif_updatestatus(struct map_session_data *sd,int type)
 		break;
 	case SP_HP:
 		WFIFOL(fd,4)=sd->battle_status.hp;
-		// TODO: Won't these overwrite the current packet?
-		if( battle_config.disp_hpmeter )
-			clif_hpmeter(sd);
-		if( !battle_config.party_hp_mode && sd->status.party_id )
-			clif_party_hp(sd);
-		if( sd->bg_id )
-			clif_bg_hp(sd);
 		break;
 	case SP_SP:
 		WFIFOL(fd,4)=sd->battle_status.sp;
@@ -2803,6 +2796,18 @@ void clif_updatestatus(struct map_session_data *sd,int type)
 		return;
 	}
 	WFIFOSET(fd,len);
+
+	// FIXME clif functions should only send packets, so trigger logic shouldn't be here
+	// other updates
+	if( type == SP_HP || type == SP_MAXHP )
+	{ // update hp meters
+		if( battle_config.disp_hpmeter )
+			clif_hpmeter(sd);
+		if( battle_config.party_hp_mode == 0 && sd->status.party_id )
+			clif_party_hp(sd);
+		if( sd->bg_id )
+			clif_bg_hp(sd);
+	}
 }
 
 
